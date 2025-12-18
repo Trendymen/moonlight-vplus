@@ -336,6 +336,8 @@
     <string name="summary_language_list">Language to use for Moonlight</string>
     <string name="title_checkbox_small_icon_mode">Use small box art</string>
     <string name="summary_checkbox_small_icon_mode">Smaller box art in the app grid allows more apps to be visible on screen</string>
+    <string name="title_checkbox_resume_stream">Resume stream automatically</string>
+    <string name="summary_checkbox_resume_stream">Automatically resume the stream when returning to Moonlight from the background</string>
 
     <string name="category_host_settings">🖥️ Host Settings</string>
     <string name="title_checkbox_enable_sops">Optimize game settings</string>
@@ -496,6 +498,10 @@
     <string name="dialog_title_background_image_api">Background Image API</string>
     <string name="dialog_message_background_image_api">Please enter the complete image API</string>
     
+    <!-- Local image picker -->
+    <string name="title_local_image_picker">Select Local Image</string>
+    <string name="summary_local_image_picker">Choose an image from your gallery as the background</string>
+    
     <!-- Reverse resolution -->
     <string name="title_checkbox_reverse_resolution">Reverse Resolution</string>
     <string name="summary_checkbox_reverse_resolution">Swap width and height values for special display requirements</string>
@@ -531,6 +537,7 @@
     <string name="game_menu_touch_mode_enhanced">Enhanced Multi Touch</string>
     <string name="game_menu_touch_mode_classic">Classic Mouse Mode</string>
     <string name="game_menu_touch_mode_trackpad">Touchpad mode</string>
+    <string name="game_menu_local_cursor_rendering">Local cursor rendering</string>
     <string name="game_menu_touch_mode_native_mouse">Native mouse pointer</string>
     <string name="toast_touch_mode_enhanced_on">Enhanced multi touch enabled</string>
     <string name="toast_touch_mode_classic_on">Classic mouse mode enabled</string>
@@ -614,6 +621,14 @@
     <string name="perf_host_latency_title">🖥️ Host Latency Information</string>
     <string name="perf_host_latency_info">Host latency represents the time for the game host to process frames.\n\nLatency Range:\n• &lt;5ms: Strong host performance\n• 5-10ms: Good host performance\n• 10-20ms: Fair host performance\n• &gt;20ms: Weak host performance\n\nInfluencing Factors:\n• Host hardware performance\n• Game load\n• Background program usage\n\nVer.V+:\n• Indicates version information\n• Displayed when no host latency data available</string>
 
+
+    <!-- Performance Overlay Info Dialogs - Battery Information -->
+    <string name="perf_battery_info_title">🔋 Battery Information</string>
+    <string name="perf_battery_status_sufficient">Battery level is sufficient</string>
+    <string name="perf_battery_status_low">Battery level is low, charging recommended</string>
+    <string name="perf_battery_status_critical">Battery level is critically low, please charge soon</string>
+    <string name="perf_battery_info_content">Current Battery: %1$d%%\nStatus: %2$s\n\nTip: Low battery may affect gaming experience, recommend connecting charger</string>
+
     <!-- App Last Settings strings -->
     <string name="app_last_settings_title">Last Settings</string>
     <string name="app_last_settings_none">No last settings</string>
@@ -633,6 +648,7 @@
     <string name="setting_gyro_sensitivity">Gyroscope: %1$.1fx</string>
     <string name="setting_bitrate_card_enabled">Bitrate Card: Enabled</string>
     <string name="setting_gyro_card_enabled">Gyro Card: Enabled</string>
+    <string name="setting_QuickKey_card_enabled">Special key card: Activate</string>
 
     <!-- Time format strings -->
     <string name="time_just_now">Just now</string>
