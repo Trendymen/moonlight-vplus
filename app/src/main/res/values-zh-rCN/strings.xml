@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- 屏幕组合模式（Sunshine） -->
+    <string name="title_screen_combination_mode">屏幕组合模式 (Sunshine 基地适用)</string>
+    <string name="summary_screen_combination_mode">控制主机在启动串流时如何管理屏幕组合，此处配置将覆盖主机端配置。</string>
+    <string name="screen_mode_host_default">使用 Sunshine 主机端配置（默认）</string>
+    <string name="screen_mode_no_operation">不修改屏幕组合配置</string>
+    <string name="screen_mode_ensure_active">确保串流屏幕已开启</string>
+    <string name="screen_mode_ensure_primary">确保串流屏幕为主屏幕</string>
+    <string name="screen_mode_ensure_only_display">仅启用串流屏幕（关闭其他屏幕）</string>
+</resources>
+
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
     <!-- Shortcut strings -->
     <string name="scut_deleted_pc"> 电脑已删除 </string>
     <string name="scut_not_paired"> 电脑未配对 </string>

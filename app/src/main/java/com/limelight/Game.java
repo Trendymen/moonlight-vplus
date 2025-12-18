@@ -691,6 +691,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 .setUseVdd(pcUseVdd)
                 .setEnableMic(prefConfig.enableMic)
                 .setControlOnly(prefConfig.controlOnly)
+                .setCustomScreenMode(prefConfig.screenCombinationMode)
                 .build();
 
         // Initialize the connection

@@ -908,6 +908,11 @@ public class NvHTTP {
             "&minBrightness=" + context.minBrightness +
             "&maxBrightness=" + context.maxBrightness +
             "&maxAverageBrightness=" + context.maxAverageBrightness;
+
+        int customScreenMode = context.streamConfig.getCustomScreenMode();
+        if (customScreenMode != -1) {
+            queryParams += "&customScreenMode=" + customScreenMode;
+        }
         
         // 如果指定了显示器GUID，添加到查询参数中
         if (context.displayName != null && !context.displayName.isEmpty()) {
