@@ -349,6 +349,7 @@ public class NvConnection {
             }
             
             LimeLog.info("Resumed existing game session");
+            LimeLog.info("[STREAM_SESSION] APP_SESSION_READY mode=resume");
             return true;
         }
         else {
@@ -387,6 +388,7 @@ public class NvConnection {
         }
         
         LimeLog.info("Launched new game session");
+        LimeLog.info("[STREAM_SESSION] APP_SESSION_READY mode=launch");
         
         return true;
     }
@@ -394,6 +396,7 @@ public class NvConnection {
     public void start(final AudioRenderer audioRenderer, final VideoDecoderRenderer videoDecoderRenderer, final NvConnectionListener connectionListener)
     {
         new Thread(() -> {
+            LimeLog.info("[STREAM_SESSION] CONNECT_PIPELINE_START");
             context.connListener = connectionListener;
             context.videoCapabilities = videoDecoderRenderer.getCapabilities();
 

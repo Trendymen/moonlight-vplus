@@ -6,6 +6,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -41,6 +42,10 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer {
 
     private static final boolean USE_FRAME_RENDER_TIME = true;
     private static final boolean FRAME_RENDER_TIME_ONLY = USE_FRAME_RENDER_TIME && false;
+    private static final String INTERNAL_STATS_LOG_PREFIX = "[INTERNAL_STATS]";
+    private static final long INTERNAL_STATS_WINDOW_MS_DEFAULT = 1000;
+    private static final long INTERNAL_STATS_WINDOW_MS_HIGH_FPS = 500;
+    private static final int HIGH_FPS_THRESHOLD = 90;
 
     // Used on versions < 5.0
     private ByteBuffer[] legacyInputBuffers;
@@ -881,6 +886,12 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer {
         return initializeDecoder(false);
     }
 
+    private long getInternalStatsWindowMs() {
+        return refreshRate >= HIGH_FPS_THRESHOLD ?
+                INTERNAL_STATS_WINDOW_MS_HIGH_FPS :
+                INTERNAL_STATS_WINDOW_MS_DEFAULT;
+    }
+
     // All threads that interact with the MediaCodec instance must call this function regularly!
     private boolean doCodecRecoveryIfRequired(int quiescenceFlag) {
         // NB: We cannot check 'stopping' here because we could end up bailing in a partially
@@ -1668,8 +1679,8 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer {
 
         lastFrameNumber = frameNumber;
 
-        // Flip stats windows roughly every second
-        if (SystemClock.uptimeMillis() >= activeWindowVideoStats.measurementStartTimestamp + 1000) {
+        // Flip stats windows based on the configured stats interval
+        if (SystemClock.uptimeMillis() >= activeWindowVideoStats.measurementStartTimestamp + getInternalStatsWindowMs()) {
             VideoStats lastTwo = new VideoStats();
             lastTwo.add(lastWindowVideoStats);
             lastTwo.add(activeWindowVideoStats);
@@ -1685,12 +1696,17 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer {
             } else {
                 decoder = "(unknown)";
             }
-            float decodeTimeMs = (float) lastTwo.decoderTimeMs / lastTwo.totalFramesReceived;
+            float decodeTimeMs = lastTwo.totalFramesReceived > 0 ?
+                    (float) lastTwo.decoderTimeMs / lastTwo.totalFramesReceived : 0f;
             long rttInfo = MoonBridge.getEstimatedRttInfo();
-            float lostFrameRate = (float) lastTwo.framesLost / lastTwo.totalFrames * 100;
-            float minHostProcessingLatency = (float) lastTwo.minHostProcessingLatency / 10;
-            float maxHostProcessingLatency = (float) lastTwo.minHostProcessingLatency / 10;
-            float aveHostProcessingLatency = (float) lastTwo.totalHostProcessingLatency / 10 / lastTwo.framesWithHostProcessingLatency;
+            float lostFrameRate = lastTwo.totalFrames > 0 ?
+                    (float) lastTwo.framesLost / lastTwo.totalFrames * 100 : 0f;
+            float minHostProcessingLatency = lastTwo.framesWithHostProcessingLatency > 0 ?
+                    (float) lastTwo.minHostProcessingLatency / 10 : 0f;
+            float maxHostProcessingLatency = lastTwo.framesWithHostProcessingLatency > 0 ?
+                    (float) lastTwo.maxHostProcessingLatency / 10 : 0f;
+            float aveHostProcessingLatency = lastTwo.framesWithHostProcessingLatency > 0 ?
+                    (float) lastTwo.totalHostProcessingLatency / 10 / lastTwo.framesWithHostProcessingLatency : 0f;
 
             // 计算平均“解码+渲染”总时间
             float aveTotalProcessingTimeMs = 0;
@@ -1712,7 +1728,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer {
             performanceInfo.renderedFps = fps.renderedFps;
             performanceInfo.lostFrameRate = lostFrameRate;
             performanceInfo.rttInfo = rttInfo;
-            performanceInfo.framesWithHostProcessingLatency = frameHostProcessingLatency;
+            performanceInfo.framesWithHostProcessingLatency = lastTwo.framesWithHostProcessingLatency;
             performanceInfo.isHdrActive = (currentHdrMetadata != null); // 基于实际HDR元数据状态
             performanceInfo.minHostProcessingLatency = minHostProcessingLatency;
             performanceInfo.maxHostProcessingLatency = maxHostProcessingLatency;
@@ -1721,6 +1737,29 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer {
             performanceInfo.renderingLatencyMs = avePureRenderingLatencyMs;
             performanceInfo.totalTimeMs = aveTotalProcessingTimeMs;
             performanceInfo.onePercentLowFps = frameIntervalTracker.getOnePercentLowFps();
+
+            int rttMs = (int) (rttInfo >>> 32);
+            int rttVarianceMs = (int) (rttInfo & 0xFFFFFFFFL);
+            LimeLog.info(String.format(Locale.US,
+                    "%s decoder=%s hdr=%s fps(total/rx/rd)=%.1f/%.1f/%.1f loss=%d/%d(%.2f%%) lossEvents=%d rtt=%dms rttVar=%dms decode=%.2fms render=%.2fms total=%.2fms host[min/max/avg]=%.1f/%.1f/%.1fms",
+                    INTERNAL_STATS_LOG_PREFIX,
+                    decoder,
+                    performanceInfo.isHdrActive,
+                    fps.totalFps,
+                    fps.receivedFps,
+                    fps.renderedFps,
+                    lastTwo.framesLost,
+                    lastTwo.totalFrames,
+                    lostFrameRate,
+                    lastTwo.frameLossEvents,
+                    rttMs,
+                    rttVarianceMs,
+                    decodeTimeMs,
+                    avePureRenderingLatencyMs,
+                    aveTotalProcessingTimeMs,
+                    minHostProcessingLatency,
+                    maxHostProcessingLatency,
+                    aveHostProcessingLatency));
 
             perfListener.onPerfUpdateV(performanceInfo);
             perfListener.onPerfUpdateWG(performanceInfo);

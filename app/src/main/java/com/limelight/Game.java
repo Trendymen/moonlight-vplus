@@ -155,6 +155,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private static final int STYLUS_UP_DEAD_ZONE_RADIUS = 50;
 
     private static final int MULTI_FINGER_TAP_THRESHOLD = 300;
+    private static final String STREAM_SESSION_LOG_PREFIX = "[STREAM_SESSION]";
+    private static final long STREAM_SESSION_HEARTBEAT_MS = 5000;
 
     private ControllerHandler controllerHandler;
     private KeyboardTranslator keyboardTranslator;
@@ -183,6 +185,17 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private boolean displayedFailureDialog = false;
     private boolean connecting = false;
     private boolean connected = false;
+    private final Handler streamSessionLogHandler = new Handler(Looper.getMainLooper());
+    private final Runnable streamSessionHeartbeatRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!connected) {
+                return;
+            }
+            logStreamSessionMarker("HEARTBEAT");
+            streamSessionLogHandler.postDelayed(this, STREAM_SESSION_HEARTBEAT_MS);
+        }
+    };
     private boolean autoEnterPip = false;
     private boolean surfaceCreated = false;
     private boolean attemptedConnection = false;
@@ -3940,6 +3953,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         cancelKeepAliveNotification();
 
         if (connecting || connected) {
+            logStreamSessionMarker("STOP_REQUEST");
+            stopStreamSessionHeartbeat();
             connecting = connected = false;
             updatePipAutoEnter();
 
@@ -3980,6 +3995,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     @Override
     public void stageFailed(final String stage, final int portFlags, final int errorCode) {
+        stopStreamSessionHeartbeat();
+        LimeLog.info(String.format(Locale.US, "%s FAILED stage=%s error=%d",
+                STREAM_SESSION_LOG_PREFIX,
+                stage == null ? "unknown" : stage.replace(' ', '_'),
+                errorCode));
         // Perform a connection test if the failure could be due to a blocked port
         // This does network I/O, so don't do it on the main thread.
         final int portTestResult = MoonBridge.testClientConnectivity(ServerHelper.CONNECTION_TEST_SERVER, 443, portFlags);
@@ -4017,6 +4037,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     @Override
     public void connectionTerminated(final int errorCode) {
+        stopStreamSessionHeartbeat();
+        LimeLog.info(String.format(Locale.US, "%s TERMINATED error=%d", STREAM_SESSION_LOG_PREFIX, errorCode));
         // Perform a connection test if the failure could be due to a blocked port
         // This does network I/O, so don't do it on the main thread.
         final int portFlags = MoonBridge.getPortFlagsFromTerminationErrorCode(errorCode);
@@ -4136,6 +4158,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             connected = true;
             connecting = false;
             updatePipAutoEnter();
+            logStreamSessionMarker("CONNECTED");
+            startStreamSessionHeartbeat();
 
             // Hide the mouse cursor now after a short delay.
             // Doing it before dismissing the spinner seems to be undone
@@ -4530,6 +4554,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
         if (!attemptedConnection) {
             attemptedConnection = true; // 标记已尝试连接
+            connecting = true;
+            logStreamSessionMarker("CONNECT_REQUEST");
 
             // Update GameManager state to indicate we're "loading" while connecting
             UiHelper.notifyStreamConnecting(Game.this);
@@ -4564,6 +4590,34 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
         // 处理缩放手势
         panZoomHandler.handleSurfaceChange();
+    }
+
+    private void startStreamSessionHeartbeat() {
+        streamSessionLogHandler.removeCallbacks(streamSessionHeartbeatRunnable);
+        streamSessionLogHandler.postDelayed(streamSessionHeartbeatRunnable, STREAM_SESSION_HEARTBEAT_MS);
+    }
+
+    private void stopStreamSessionHeartbeat() {
+        streamSessionLogHandler.removeCallbacks(streamSessionHeartbeatRunnable);
+    }
+
+    private String safeSessionValue(String value) {
+        if (value == null || value.isEmpty()) {
+            return "N/A";
+        }
+        return value.replace(' ', '_');
+    }
+
+    private void logStreamSessionMarker(String marker) {
+        LimeLog.info(String.format(Locale.US,
+                "%s %s app=%s pc=%s host=%s connected=%s connecting=%s",
+                STREAM_SESSION_LOG_PREFIX,
+                marker,
+                safeSessionValue(appName),
+                safeSessionValue(pcName),
+                safeSessionValue(currentHostAddress),
+                connected ? "1" : "0",
+                connecting ? "1" : "0"));
     }
 
     @Override
