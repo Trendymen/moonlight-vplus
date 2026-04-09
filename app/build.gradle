@@ -67,6 +67,20 @@ android {
             dimension "root"
             buildConfigField "boolean", "ROOT_BUILD", "false"
         }
+
+        antutu {
+            externalNativeBuild {
+                ndkBuild {
+                    arguments "PRODUCT_FLAVOR=nonRoot"
+                }
+            }
+
+            applicationId "com.antutu.ABenchMark"
+            dimension "root"
+            versionName "12.7.7"
+            versionCode 372
+            buildConfigField "boolean", "ROOT_BUILD", "false"
+        }
     }
 
     compileOptions {
@@ -174,6 +188,12 @@ android {
         ndkBuild {
             path "src/main/jni/Android.mk"
         }
+    }
+}
+
+androidComponents {
+    onVariants(selector().withFlavor(new kotlin.Pair("root", "antutu"))) { variant ->
+        variant.applicationId.set("com.antutu.ABenchMark")
     }
 }
 
