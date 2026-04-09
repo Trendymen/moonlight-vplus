@@ -1176,6 +1176,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer {
                     videoDecoder.releaseOutputBuffer(bufferIndex, System.nanoTime());
                 }
                 activeWindowVideoStats.totalFramesRendered++;
+                frameIntervalTracker.recordFrame();
             } catch (IllegalStateException e) {
                 handleDecoderException(e);
             }
